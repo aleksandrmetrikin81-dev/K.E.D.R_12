@@ -1,0 +1,74 @@
+устройства 
+psi [ens3 - ,ens4 172.16.1.1/28, ens5 172.16.2.1/28]
+hqA-rtr [isp 172.16.1.2/28, vl100 10.10.100.1/27, vl200 10.10.200.1/28, vl999 10.10.30.1/29 + tunnel.0 10.10.10.1/30]
+hqA-sw 
+hqA-srv [ens3 10.10.100.2/27]
+hqA-cli [dhcp]
+
+brB-rtr [isp 172.16.2.2/28, fw 10.20.10.1/30 + tunnel.0 10.10.10.2/30]
+brB-srv [ens3 10.20.20.2/28]
+brB-cli [ens3 10.20.30.2/29]
+brB-fw  [ens3 10.20.10.2/30, ens4 10.20.20.1/28, ens5 10.20.30.1/29] 
+
+фронт работ
+на PSI
+  1. имя устройства
+  2. forward-инг на 1 поменять раскоментить (/etc/net/sysctl.conf)
+  3. iptables
+  4. timedatectl 
+на RTR-hqA/brB
+  1. имя устройства + домен (ip domain-name <имя_домена>)
+  2. gre (1.2 -> 2.2) для hq и (2.2 -> 1.2) для br
+  3. маршрут по умолчанию 
+  4. ospf 0 (анонсируем все сети кроме исповой)
+  5. nat (10.10.0.1-10.10.254.254)
+  6. время ntp (ntp timezone utc+3)
+hqA-sw 
+  1. только имя 
+на hqA-srv
+  1. имя
+  2. ip-шник, шлюз и dns на ens3 дать
+  3. vim +123 /etc/sudoers - раскоментить 
+  4. ssh (баннер) Banner -> директория_хранения_баннера ( в папке /etc/openssh) содержимое баннера [Authorized access only]
+  5. dns 
+      /etc/bind/options.conf
+        меняешь:
+        listen-on 10.10.100.2;
+        v6 {none;}
+        раскоментить forwarders {77.88.8.8;}
+        allow-query {any;}
+      /etc/bind/zone/au-t
+        поменять admin на root
+      /etc/bind/zone/10.10.in-addr.arpa
+        itpo поменять на irpo
+      кинь в автозагрузку bind.service
+    6. timedatectl
+на hqA-cli
+  1. имя
+на brB-cli
+  1. имя
+  2. ip
+  3. timedatectl
+на brB-srv
+  1. имя
+  2. ip
+  3. sudoers (vim +123 - раскоментить)
+  4. ssh (баннер) Banner -> директория_хранения_баннера ( в папке /etc/openssh) содержимое баннера [Authorized access only]
+  5. timedatectl
+  на brB-fw
+  подключться через браузер по 10.20.30.1:8443
+  1. имя 
+  2. ospf (вкл, настроить)
+  3. интерфейс  (вкл, настроить)
+  4. timedatectl
+
+дополнительно 
+ospf: 
+passive-interface default
+no passive-interface tunnel.0
+area 0 authentication
+exit
+interface tunnel.0
+ip ospf authentication message-digest 
+ip ospf message-digest-key 1 md5 P@ssw0rd 
+по аналогии с интерфейсом fw на br-rtr
