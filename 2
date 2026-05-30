@@ -1,0 +1,60 @@
+фронт работ
+brB-srv 
+  1. samba [группы samba-tool group add hq/br] + пользователи
+  for i in {1..5}; 
+  do
+  samba-tool user add hquser$i P@ssw0rd;
+  samba-tool user setexpiry hquser$i --noexpiry;
+  samba-tool group addmembers "hq" hquser$i;
+  done
+  2. chrony [/etc/chrony.conf] pool 172.16.1.1 iburst -> перезапуск chronyd (ВЕЗДЕ!!!)
+  3. ansible
+      [hq]
+      ansible_host = <ip>
+      ansible_port = <2026 для hq-srv, 22 для остальных>
+      ansible_ssh_user = root -> ALT/net_admin -> Eco
+      ansible_ssh_pass = toor -> ALT/P@ssw0rd -> Eco
+      ДЛЯ ECO
+      ansible_connection = network_cli и ansible_betwork_os=ios
+      [br]
+      волшебная команда проверки ansible all –m ping
+  4. docker
+      постучись c br-cli на 10.20.20.2:8080.
+      (Должно быть всё гуд)
+hqA-srv
+  1. chrony
+  2. web
+      ls /var/www/html
+      mount /dev/sr0 /mnt
+      cp /mnt/web/index.php /var/www/html/
+      cp /mnt/web/logo.png  /var/www/html/
+      зайти в /var/www/html/index.php и поменять username ["webc"], password ["P@ssw0rd"] и  dbname ["webdb"]
+  3.mariadb
+      mariadb -u root
+      CREATE USER ‘webc’@’localhost’ IDENTIFIED BY ‘P@ssw0rd’;
+      GRANT ALL PRIVILEGES ON webdb.* TO  ‘webc’@’localhost’ WITH GRANT OPTION;
+      EXIT;
+      mariadb –u webc –p –D webdb < /mnt/web/dump.sql
+      P@ssw0rd
+      systemctl restart mariadb
+      systemctl restart httpd2
+
+ISP
+  1. chrony
+  2. nginx
+  3. apache2
+hqA/B-RTR 
+  1.ntp server 
+hqA-cli
+  1. chrony
+  2. ввод в домен параметры -> избранное -> центр управления системой (toor) -> Аутентифекация -> применить (Administrator/P@ssw0rd)
+  3. sudoers Cmnd_Alias DE = /bin/cat, /bin/grep, /usr/bin/id
+             WHEEL_ESERS ALL = (ALL:ALL) DE
+brB-cli
+  1. chrony sourses
+  iburst
+  2. монтаж папки /mnt/nfs
+  df -h
+  mount –av
+  
+  
